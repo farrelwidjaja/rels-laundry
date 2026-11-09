@@ -1,0 +1,34 @@
+{
+  "name": "rels-laundry",
+  "version": "1.0.0",
+  "description": "Rels Laundry — Smart Laundry Management System with QR Code & WhatsApp Automation",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node tests/test.js"
+  },
+  "keywords": [
+    "devops",
+    "cloud-services",
+    "docker",
+    "noc",
+    "monitoring",
+    "healthcheck",
+    "sqlite"
+  ],
+  "author": "NOC DevOps Team",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "ioredis": "^6.0.0",
+    "morgan": "^1.10.0",
+    "pg": "^8.23.1"
+  },
+  "engines": {
+    "node": ">=22.x"
+  }
+}

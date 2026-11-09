@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rels Laundry — Smart Laundry Management System with QR Code</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#EFF6FF',
+              100: '#DBEAFE',
+              200: '#BFDBFE',
+              500: '#3B82F6',
+              600: '#2563EB',
+              700: '#1D4ED8',
+              800: '#1E40AF',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+
+  <!-- ================= TOP HEADER NAVIGATION ================= -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('overview')">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 to-blue-500 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+          <i class="fa-solid fa-soap text-lg"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-lg font-bold text-slate-900 tracking-tight">Rels Laundry</span>
+            <span class="text-[11px] font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">QR LMS</span>
+          </div>
+          <p class="text-[11px] text-slate-500 font-medium">Laundry Management & WA Bot</p>
+        </div>
+      </div>
+
+      <!-- Center Navigation Tabs -->
+      <nav class="hidden md:flex items-center space-x-1">
+        <button onclick="switchTab('overview')" class="nav-tab-btn active" data-tab="overview">
+          <i class="fa-solid fa-cash-register text-sm"></i>
+          <span>Kasir & POS</span>
+        </button>
+
+        <button onclick="switchTab('track')" class="nav-tab-btn" data-tab="track">
+          <i class="fa-solid fa-qrcode text-sm"></i>
+          <span>Lacak QR Code</span>
+        </button>
+
+        <button onclick="switchTab('chat')" class="nav-tab-btn" data-tab="chat">
+          <i class="fa-brands fa-whatsapp text-sm text-emerald-600"></i>
+          <span>Bot WhatsApp</span>
+        </button>
+
+        <button onclick="switchTab('logs')" class="nav-tab-btn" data-tab="logs">
+          <i class="fa-solid fa-list-check text-sm"></i>
+          <span>Audit Logs</span>
+        </button>
+      </nav>
+
+      <!-- Right Header Actions -->
+      <div class="flex items-center space-x-3">
+        <!-- Live Cloud Health Indicator -->
+        <div id="header-health-badge" class="hidden sm:flex items-center space-x-2 px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-xs font-semibold text-emerald-700">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="header-health-text">Cloud 200 OK</span>
+        </div>
+
+        <!-- Quick Create Order Button -->
+        <button id="btn-open-create-modal" class="bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs sm:text-sm px-4 py-2 rounded-full shadow-sm hover:shadow transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-plus"></i>
+          <span>Order Baru</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Mobile Navigation Bar -->
+    <div class="md:hidden flex overflow-x-auto border-t border-slate-100 px-3 py-2 space-x-1 bg-white">
+      <button onclick="switchTab('overview')" class="nav-tab-btn active text-xs whitespace-nowrap py-1.5 px-3" data-tab="overview">
+        <i class="fa-solid fa-cash-register"></i> Kasir
+      </button>
+      <button onclick="switchTab('track')" class="nav-tab-btn text-xs whitespace-nowrap py-1.5 px-3" data-tab="track">
+        <i class="fa-solid fa-qrcode"></i> Lacak QR
+      </button>
+      <button onclick="switchTab('chat')" class="nav-tab-btn text-xs whitespace-nowrap py-1.5 px-3" data-tab="chat">
+        <i class="fa-brands fa-whatsapp text-emerald-600"></i> WA Bot
+      </button>
+      <button onclick="switchTab('logs')" class="nav-tab-btn text-xs whitespace-nowrap py-1.5 px-3" data-tab="logs">
+        <i class="fa-solid fa-list-check"></i> Logs
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTAINER ================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- ================= VIEW 1: OVERVIEW & POS CASHIER ================= -->
+    <div id="view-overview" class="view-panel space-y-6">
+      
+      <!-- Top Metrics Dashboard -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Metric 1: Revenue -->
+        <div class="lms-card p-4 sm:p-5 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Omset Hari Ini</p>
+            <h3 id="stat-revenue" class="text-lg sm:text-2xl font-bold text-slate-900 mt-1">Rp 0</h3>
+            <p class="text-[11px] text-emerald-600 font-medium mt-1 flex items-center">
+              <i class="fa-solid fa-arrow-trend-up mr-1"></i> Transaksi terverifikasi
+            </p>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-wallet"></i>
+          </div>
+        </div>
+
+        <!-- Metric 2: Total Weight -->
+        <div class="lms-card p-4 sm:p-5 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Timbangan</p>
+            <h3 id="stat-weight" class="text-lg sm:text-2xl font-bold text-slate-900 mt-1">0 Kg</h3>
+            <p class="text-[11px] text-blue-600 font-medium mt-1 flex items-center">
+              <i class="fa-solid fa-scale-balanced mr-1"></i> Kapasitas harian
+            </p>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-weight-scale"></i>
+          </div>
+        </div>
+
+        <!-- Metric 3: Active Orders -->
+        <div class="lms-card p-4 sm:p-5 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Order Berjalan</p>
+            <h3 id="order-count-badge" class="text-lg sm:text-2xl font-bold text-slate-900 mt-1">0 Order</h3>
+            <p class="text-[11px] text-amber-600 font-medium mt-1 flex items-center">
+              <i class="fa-solid fa-arrows-spin mr-1"></i> Antrian & Cuci
+            </p>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-basket-shopping"></i>
+          </div>
+        </div>
+
+        <!-- Metric 4: WhatsApp Messages -->
+        <div class="lms-card p-4 sm:p-5 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Notifikasi WA</p>
+            <h3 id="stat-chats" class="text-lg sm:text-2xl font-bold text-slate-900 mt-1">0 Pesan</h3>
+            <p class="text-[11px] text-emerald-600 font-medium mt-1 flex items-center">
+              <i class="fa-solid fa-check-double mr-1"></i> Bot otomatis aktif
+            </p>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-brands fa-whatsapp"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Filter Pills for Services (Inspired by reference UI) -->
+      <div class="flex items-center space-x-2 overflow-x-auto pb-1">
+        <span class="text-xs font-semibold text-slate-500 shrink-0 mr-1">Layanan:</span>
+        <button class="service-pill active" data-service-filter="ALL" onclick="filterByServiceCategory('ALL')">
+          <i class="fa-solid fa-border-all"></i> Semua
+        </button>
+        <button class="service-pill" data-service-filter="Cuci Komplit (Cuci + Setrika)" onclick="filterByServiceCategory('Cuci Komplit (Cuci + Setrika)')">
+          <i class="fa-solid fa-jug-detergent"></i> Cuci Komplit (Rp 8.000)
+        </button>
+        <button class="service-pill" data-service-filter="Cuci Kering (Lipat)" onclick="filterByServiceCategory('Cuci Kering (Lipat)')">
+          <i class="fa-solid fa-shirt"></i> Cuci Kering (Rp 6.000)
+        </button>
+        <button class="service-pill" data-service-filter="Setrika Saja" onclick="filterByServiceCategory('Setrika Saja')">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Setrika Saja (Rp 5.000)
+        </button>
+        <button class="service-pill" data-service-filter="Express 3 Jam" onclick="filterByServiceCategory('Express 3 Jam')">
+          <i class="fa-solid fa-bolt"></i> Express 3 Jam (Rp 15.000)
+        </button>
+        <button class="service-pill" data-service-filter="Bedcover / Selimut" onclick="filterByServiceCategory('Bedcover / Selimut')">
+          <i class="fa-solid fa-bed"></i> Bedcover (Rp 25.000)
+        </button>
+      </div>
+
+      <!-- Two-Column Workspace -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- ================= LEFT COLUMN: POS ORDER ENTRY FORM ================= -->
+        <div class="lg:col-span-5 space-y-5">
+          <div class="lms-card p-5">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </div>
+                <div>
+                  <h2 class="text-base font-bold text-slate-900">Kasir & Timbang Cepat</h2>
+                  <p class="text-xs text-slate-500">Input nota order dan langsung generate QR E-Receipt</p>
+                </div>
+              </div>
+              <span class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md font-mono-code font-semibold">POS v2.4</span>
+            </div>
+
+            <form id="quick-pos-form" class="mt-4 space-y-4">
+              <!-- Customer Name -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">
+                  Nama Pelanggan <span class="text-rose-500">*</span>
+                </label>
+                <div class="relative">
+                  <i class="fa-regular fa-user absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                  <input type="text" id="quick-name" placeholder="Contoh: Ibu Sri Rahayu" required
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-xs sm:text-sm text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500 transition">
+                </div>
+              </div>
+
+              <!-- Customer WhatsApp Phone -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">
+                  Nomor WhatsApp Pelanggan <span class="text-rose-500">*</span>
+                </label>
+                <div class="relative">
+                  <i class="fa-brands fa-whatsapp absolute left-3 top-2.5 text-emerald-500 text-xs"></i>
+                  <input type="tel" id="quick-phone" placeholder="081234567890" required
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-xs sm:text-sm text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500 transition">
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">Bot WA akan otomatis mengirimkan notifikasi saat pakaian selesai dicuci.</p>
+              </div>
+
+              <!-- Service Package Selection -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">
+                  Pilih Paket Layanan <span class="text-rose-500">*</span>
+                </label>
+                <select id="quick-service" required
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500 transition">
+                  <option value="Cuci Komplit (Cuci + Setrika)">🧺 Cuci Komplit (Cuci + Setrika) — Rp 8.000 / Kg</option>
+                  <option value="Cuci Kering (Lipat)">👕 Cuci Kering (Lipat) — Rp 6.000 / Kg</option>
+                  <option value="Setrika Saja">👔 Setrika Saja — Rp 5.000 / Kg</option>
+                  <option value="Express 3 Jam">⚡ Express 3 Jam Kilat — Rp 15.000 / Kg</option>
+                  <option value="Bedcover / Selimut">🛏️ Bedcover / Selimut — Rp 25.000 / Pcs</option>
+                </select>
+              </div>
+
+              <!-- Garment Items Counter Section (Matching the reference UI) -->
+              <div class="pt-2 border-t border-slate-100">
+                <div class="flex items-center justify-between mb-2">
+                  <label class="text-xs font-semibold text-slate-700">
+                    Rincian Pakaian (Otomatis Estimasi Berat)
+                  </label>
+                  <button type="button" id="btn-reset-garments" class="text-[11px] text-blue-600 hover:underline">Reset Pakaian</button>
+                </div>
+
+                <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                  <!-- Item 1: Kaos / T-Shirt -->
+                  <div class="garment-card">
+                    <div class="flex items-center space-x-2">
+                      <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-shirt"></i>
+                      </div>
+                      <div>
+                        <p class="text-xs font-semibold text-slate-800">Kaos / T-Shirt</p>
+                        <p class="text-[10px] text-slate-400">~0.20 Kg / potong</p>
+                      </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <button type="button" class="counter-btn" onclick="adjustGarment('tshirt', -1)">-</button>
+                      <span id="garment-tshirt-qty" class="text-xs font-bold text-slate-800 w-5 text-center">0</span>
+                      <button type="button" class="counter-btn" onclick="adjustGarment('tshirt', 1)">+</button>
+                    </div>
+                  </div>
+
+                  <!-- Item 2: Kemeja / Shirt -->
+                  <div class="garment-card">
+                    <div class="flex items-center space-x-2">
+                      <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-user-tie"></i>
+                      </div>
+                      <div>
+                        <p class="text-xs font-semibold text-slate-800">Kemeja / Blus</p>
+                        <p class="text-[10px] text-slate-400">~0.25 Kg / potong</p>
+                      </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <button type="button" class="counter-btn" onclick="adjustGarment('shirt', -1)">-</button>
+                      <span id="garment-shirt-qty" class="text-xs font-bold text-slate-800 w-5 text-center">0</span>
+                      <button type="button" class="counter-btn" onclick="adjustGarment('shirt', 1)">+</button>
+                    </div>
+                  </div>
+
+                  <!-- Item 3: Celana Jeans -->
+                  <div class="garment-card">
+                    <div class="flex items-center space-x-2">
+                      <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-socks"></i>
+                      </div>
+                      <div>
+                        <p class="text-xs font-semibold text-slate-800">Celana Jeans / Tebal</p>
+                        <p class="text-[10px] text-slate-400">~0.60 Kg / potong</p>
+                      </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <button type="button" class="counter-btn" onclick="adjustGarment('jeans', -1)">-</button>
+                      <span id="garment-jeans-qty" class="text-xs font-bold text-slate-800 w-5 text-center">0</span>
+                      <button type="button" class="counter-btn" onclick="adjustGarment('jeans', 1)">+</button>
+                    </div>
+                  </div>
+
+                  <!-- Item 4: Jaket / Sweater -->
+                  <div class="garment-card">
+                    <div class="flex items-center space-x-2">
+                      <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-vest"></i>
+                      </div>
+                      <div>
+                        <p class="text-xs font-semibold text-slate-800">Jaket / Hoodie</p>
+                        <p class="text-[10px] text-slate-400">~0.70 Kg / potong</p>
+                      </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <button type="button" class="counter-btn" onclick="adjustGarment('jacket', -1)">-</button>
+                      <span id="garment-jacket-qty" class="text-xs font-bold text-slate-800 w-5 text-center">0</span>
+                      <button type="button" class="counter-btn" onclick="adjustGarment('jacket', 1)">+</button>
+                    </div>
+                  </div>
+
+                  <!-- Item 5: Bedcover / Selimut -->
+                  <div class="garment-card">
+                    <div class="flex items-center space-x-2">
+                      <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs">
+                        <i class="fa-solid fa-bed"></i>
+                      </div>
+                      <div>
+                        <p class="text-xs font-semibold text-slate-800">Bedcover / Sprei</p>
+                        <p class="text-[10px] text-slate-400">~1.50 Kg / pcs</p>
+                      </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <button type="button" class="counter-btn" onclick="adjustGarment('bedsheet', -1)">-</button>
+                      <span id="garment-bedsheet-qty" class="text-xs font-bold text-slate-800 w-5 text-center">0</span>
+                      <button type="button" class="counter-btn" onclick="adjustGarment('bedsheet', 1)">+</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Weight & Delivery Grid -->
+              <div class="grid grid-cols-2 gap-3 pt-2">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">
+                    Berat Timbangan (Kg) <span class="text-rose-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <input type="number" step="0.1" min="0.1" max="500" id="quick-weight" placeholder="3.5" required
+                      class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm font-bold text-blue-700 focus:bg-white focus:outline-none focus:border-blue-500 transition">
+                    <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-semibold">Kg</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">
+                    Pengambilan
+                  </label>
+                  <select id="quick-pickup"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500 transition">
+                    <option value="Ambil Sendiri">🚶 Ambil Sendiri</option>
+                    <option value="Kurir Antar-Jemput">🛵 Kurir Antar-Jemput</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Notes & Special Instructions -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">
+                  Catatan Khusus Cucian
+                </label>
+                <input type="text" id="quick-notes" placeholder="Contoh: Pisahkan kemeja putih, jangan disikat kasar"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500 transition">
+              </div>
+
+              <!-- Total Price Display Box -->
+              <div class="bg-blue-50/80 border border-blue-200 rounded-xl p-3.5 flex items-center justify-between">
+                <div>
+                  <span class="text-[11px] font-semibold text-blue-700 uppercase tracking-wider block">Total Tagihan</span>
+                  <p class="text-[11px] text-slate-500" id="quick-rate-label">Cuci Komplit @ Rp 8.000 / Kg</p>
+                </div>
+                <div class="text-right">
+                  <span id="quick-total-price" class="text-xl font-extrabold text-blue-700">Rp 0</span>
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <button type="submit" id="btn-submit-quick"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md shadow-blue-500/20 hover:shadow-lg transition flex items-center justify-center space-x-2 text-sm">
+                <i class="fa-solid fa-qrcode"></i>
+                <span>Simpan Order & Buat QR Code Nota</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- ================= RIGHT COLUMN: ORDER TABLE & QR ACTIONS ================= -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="lms-card p-5">
+            <!-- Table Header & Controls -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+              <div>
+                <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                  <span>Daftar Order & Status Pelanggan</span>
+                  <span id="table-count-tag" class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">0 Order</span>
+                </h2>
+                <p class="text-xs text-slate-500">Klik E-Receipt untuk mencetak nota dengan QR Code scannable</p>
+              </div>
+
+              <!-- Search and Filter in Table -->
+              <div class="flex items-center space-x-2">
+                <div class="relative w-44 sm:w-56">
+                  <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                  <input type="text" id="order-search-input" placeholder="Cari nota / nama / HP..."
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500 transition">
+                </div>
+
+                <select id="status-filter-select" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 focus:outline-none focus:border-blue-500">
+                  <option value="ALL">Semua Status</option>
+                  <option value="Antrian">Antrian</option>
+                  <option value="Proses Cuci">Proses Cuci</option>
+                  <option value="Setrika">Setrika</option>
+                  <option value="Selesai">Selesai</option>
+                  <option value="Diambil / Diantar">Diambil / Diantar</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Orders Table Responsive Container -->
+            <div class="overflow-x-auto mt-4">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50/50">
+                    <th class="py-2.5 px-3">Nota & QR</th>
+                    <th class="py-2.5 px-3">Pelanggan</th>
+                    <th class="py-2.5 px-3">Paket / Berat</th>
+                    <th class="py-2.5 px-3">Total Biaya</th>
+                    <th class="py-2.5 px-3">Status Cucian</th>
+                    <th class="py-2.5 px-3 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-table-tbody" class="divide-y divide-slate-100 text-xs">
+                  <!-- Dynamic rows generated by app.js -->
+                  <tr>
+                    <td colspan="6" class="py-8 text-center text-slate-400">
+                      <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Memuat data order...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Table Footer Quick Guide -->
+            <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-slate-500 gap-2">
+              <div class="flex items-center space-x-3">
+                <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-amber-400 mr-1.5"></span> Antrian</span>
+                <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-blue-500 mr-1.5"></span> Cuci</span>
+                <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-purple-500 mr-1.5"></span> Setrika</span>
+                <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></span> Selesai</span>
+              </div>
+              <span>Database Sync: Persistent SQLite Volume</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= VIEW 2: QR CODE TRACKING & SCANNER SIMULATOR ================= -->
+    <div id="view-track" class="view-panel hidden space-y-6">
+      <div class="lms-card p-6 max-w-3xl mx-auto">
+        <div class="text-center max-w-lg mx-auto">
+          <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl mx-auto mb-3">
+            <i class="fa-solid fa-qrcode"></i>
+          </div>
+          <h2 class="text-xl font-bold text-slate-900">Pelacak Cucian dengan QR Code</h2>
+          <p class="text-xs text-slate-500 mt-1">
+            Fitur inspirasi dari repositori LMS dengan QR Code. Masukkan kode nota atau scan QR Code untuk melihat status pengerjaan cucian secara real-time.
+          </p>
+        </div>
+
+        <!-- QR Code Search Bar -->
+        <div class="mt-6 flex items-center space-x-2 max-w-md mx-auto">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-barcode absolute left-3.5 top-3 text-slate-400"></i>
+            <input type="text" id="track-order-input" placeholder="Masukkan kode nota (Contoh: WASH-1002)"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-3 py-2 text-sm text-slate-800 font-mono-code focus:bg-white focus:outline-none focus:border-blue-500 uppercase">
+          </div>
+          <button id="btn-search-track" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl text-sm transition">
+            Lacak Nota
+          </button>
+        </div>
+
+        <!-- Quick Select Buttons for Demo -->
+        <div class="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs">
+          <span class="text-slate-400">Pilih Nota Contoh:</span>
+          <button onclick="simulateTrack('WASH-1001')" class="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 rounded-lg font-mono-code text-slate-700 transition">WASH-1001</button>
+          <button onclick="simulateTrack('WASH-1002')" class="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 rounded-lg font-mono-code text-slate-700 transition">WASH-1002 (Selesai)</button>
+          <button onclick="simulateTrack('WASH-1003')" class="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 rounded-lg font-mono-code text-slate-700 transition">WASH-1003</button>
+          <button onclick="simulateTrack('WASH-1004')" class="px-2.5 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 rounded-lg font-mono-code text-slate-700 transition">WASH-1004</button>
+        </div>
+
+        <!-- Tracking Result Card (Dynamically updated) -->
+        <div id="track-result-container" class="mt-8 border-t border-slate-100 pt-6">
+          <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200 flex flex-col md:flex-row items-center gap-6">
+            <div class="text-center shrink-0">
+              <div id="track-qr-box" class="p-2 bg-white rounded-xl shadow-xs border border-slate-200 inline-block">
+                <img id="track-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=WASH-1002" alt="QR Code" class="w-32 h-32">
+              </div>
+              <p id="track-code-label" class="text-xs font-mono-code font-bold text-slate-800 mt-2">WASH-1002</p>
+            </div>
+
+            <div class="flex-1 w-full space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 id="track-cust-name" class="text-base font-bold text-slate-900">Budi Santoso</h3>
+                  <p id="track-cust-phone" class="text-xs text-slate-500">WA: 081398765432</p>
+                </div>
+                <div id="track-status-badge" class="badge-status badge-selesai text-xs">
+                  <i class="fa-solid fa-circle-check"></i> Selesai
+                </div>
+              </div>
+
+              <!-- Timeline of Progress -->
+              <div class="space-y-3 pt-2">
+                <div class="flex items-center text-xs">
+                  <div class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] mr-3 shrink-0">
+                    <i class="fa-solid fa-check"></i>
+                  </div>
+                  <div class="flex-1 flex justify-between">
+                    <span class="font-medium text-slate-700">1. Order Diterima & Ditimbang (3.0 Kg)</span>
+                    <span class="text-slate-400">10:30 WIB</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center text-xs">
+                  <div class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] mr-3 shrink-0">
+                    <i class="fa-solid fa-check"></i>
+                  </div>
+                  <div class="flex-1 flex justify-between">
+                    <span class="font-medium text-slate-700">2. Proses Cuci & Pengeringan Mesin</span>
+                    <span class="text-slate-400">11:15 WIB</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center text-xs">
+                  <div class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] mr-3 shrink-0">
+                    <i class="fa-solid fa-check"></i>
+                  </div>
+                  <div class="flex-1 flex justify-between">
+                    <span class="font-medium text-slate-700">3. Setrika Uap & Quality Control</span>
+                    <span class="text-slate-400">12:45 WIB</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center text-xs">
+                  <div class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] mr-3 shrink-0">
+                    <i class="fa-solid fa-check"></i>
+                  </div>
+                  <div class="flex-1 flex justify-between">
+                    <span class="font-bold text-emerald-700">4. Packing Rapi & Wangi (Siap Diambil / Diantar)</span>
+                    <span class="text-emerald-700 font-bold">14:00 WIB</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pt-2 flex items-center justify-between border-t border-slate-200 text-xs">
+                <span class="text-slate-500">Total Tagihan: <strong id="track-total-price" class="text-slate-900">Rp 45.000</strong></span>
+                <button id="btn-track-view-receipt" class="text-blue-600 hover:underline font-semibold flex items-center">
+                  <i class="fa-solid fa-receipt mr-1"></i> Buka Nota E-Receipt
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 3: WHATSAPP BOT CONVERSATION ================= -->
+    <div id="view-chat" class="view-panel hidden space-y-6">
+      <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6">
+        
+        <!-- Bot Info & Prompt Suggestions -->
+        <div class="md:col-span-5 space-y-4">
+          <div class="lms-card p-5">
+            <div class="flex items-center space-x-3 pb-3 border-b border-slate-100">
+              <div class="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center text-2xl shadow-sm">
+                <i class="fa-brands fa-whatsapp"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-slate-900">Rels Laundry Bot Assistant</h3>
+                <p class="text-[11px] text-emerald-600 font-medium flex items-center">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span> Online Otomatis 24/7
+                </p>
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-600 mt-3 leading-relaxed">
+              Bot WhatsApp ini terintegrasi dengan REST API database. Pelanggan dapat menanyakan status cucian, jadwal pengantaran, atau daftar harga secara interaktif.
+            </p>
+
+            <div class="mt-4 pt-3 border-t border-slate-100">
+              <span class="text-xs font-bold text-slate-700 block mb-2">Pilihan Pertanyaan Cepat:</span>
+              <div class="space-y-2">
+                <button onclick="sendQuickChatMessage('Cek status cucian saya WASH-1002')"
+                  class="w-full text-left text-xs bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 rounded-xl p-2.5 transition flex items-center justify-between">
+                  <span>🔍 "Cek status cucian WASH-1002"</span>
+                  <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+                </button>
+
+                <button onclick="sendQuickChatMessage('Berapa daftar harga paket laundry Rels Laundry?')"
+                  class="w-full text-left text-xs bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 rounded-xl p-2.5 transition flex items-center justify-between">
+                  <span>📋 "Daftar harga & paket laundry"</span>
+                  <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+                </button>
+
+                <button onclick="sendQuickChatMessage('Apakah ada layanan antar jemput gratis?')"
+                  class="w-full text-left text-xs bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 rounded-xl p-2.5 transition flex items-center justify-between">
+                  <span>🛵 "Tanya syarat antar-jemput"</span>
+                  <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+                </button>
+
+                <button onclick="sendQuickChatMessage('Status cucian WASH-1001')"
+                  class="w-full text-left text-xs bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 rounded-xl p-2.5 transition flex items-center justify-between">
+                  <span>🧺 "Cek status cucian WASH-1001"</span>
+                  <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Chat Window -->
+        <div class="md:col-span-7">
+          <div class="lms-card overflow-hidden flex flex-col h-[560px]">
+            <!-- WhatsApp Chat Top Bar -->
+            <div class="bg-emerald-700 text-white p-3.5 flex items-center justify-between shrink-0">
+              <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                  <i class="fa-solid fa-robot"></i>
+                </div>
+                <div>
+                  <h4 class="text-xs font-bold leading-tight">Rels Laundry Official Bot</h4>
+                  <p class="text-[10px] text-emerald-100">Akun Bisnis Terverifikasi</p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-3 text-xs text-white/80">
+                <i class="fa-solid fa-phone"></i>
+                <i class="fa-solid fa-video"></i>
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+              </div>
+            </div>
+
+            <!-- Chat Message Feed -->
+            <div id="wa-chat-container" class="wa-window flex-1 p-4 overflow-y-auto space-y-3">
+              <!-- Chat bubbles rendered dynamically -->
+            </div>
+
+            <!-- Chat Input Form -->
+            <form id="wa-chat-form" class="bg-slate-100 p-2.5 flex items-center space-x-2 shrink-0 border-t border-slate-200">
+              <button type="button" class="text-slate-500 hover:text-slate-700 p-1.5 text-base">
+                <i class="fa-regular fa-face-smile"></i>
+              </button>
+              <input type="text" id="wa-input-message" placeholder="Ketik pesan atau kode nota (contoh: WASH-1002)..." required
+                class="flex-1 bg-white border border-slate-200 rounded-full px-4 py-2 text-xs text-slate-800 focus:outline-none focus:border-emerald-500 transition">
+              <button type="submit" class="w-9 h-9 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-xs transition shrink-0">
+                <i class="fa-solid fa-paper-plane text-xs"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= VIEW 4: AUDIT LOGS ================= -->
+    <div id="view-logs" class="view-panel hidden space-y-4">
+      <div class="lms-card p-5">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Audit & System Transaction Logs</h2>
+            <p class="text-xs text-slate-500">Pencatatan riwayat transaksi POS, bot WhatsApp, dan HTTP server events</p>
+          </div>
+          <button id="btn-refresh-logs" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg transition flex items-center space-x-1.5">
+            <i class="fa-solid fa-arrows-rotate"></i>
+            <span>Refresh Log</span>
+          </button>
+        </div>
+
+        <div class="mt-4 bg-slate-900 text-slate-200 rounded-xl p-4 font-mono-code text-xs max-h-96 overflow-y-auto space-y-2" id="terminal-log-container">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ================= E-RECEIPT & QR CODE MODAL ================= -->
+  <!-- Direct match with reference image media_1793816370414.png & HashJ LMS repo -->
+  <div id="receipt-modal" onclick="if(event.target === this) closeReceiptModal()" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs hidden flex items-start justify-center p-3 sm:p-6 overflow-y-auto">
+    <div class="relative w-full max-w-sm my-4 sm:my-8">
+      
+      <!-- Ticket Body with Inside-Header Close Button -->
+      <div id="printable-receipt-card" class="receipt-paper p-5 sm:p-6 text-slate-800 relative shadow-2xl">
+        
+        <!-- Inside Card Prominent Close Button (Always in viewport!) -->
+        <button type="button" onclick="closeReceiptModal()" aria-label="Tutup Nota" title="Tutup Nota (Esc)"
+          class="no-print absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 flex items-center justify-center text-sm z-30 transition shadow-xs cursor-pointer border border-slate-200">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <!-- Header -->
+        <div class="text-center pr-6 pl-6">
+          <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest block">Nota Resmi Laundry</span>
+          <h3 class="text-xl font-extrabold text-slate-900 tracking-tight mt-0.5">Rels Laundry</h3>
+          <p class="text-[11px] text-slate-500">Jl. Awan Digital No. 88, Cloud City</p>
+          <p class="text-[10px] text-slate-400">WhatsApp Hotline: +62 812-9988-7766</p>
+        </div>
+
+        <!-- Barcode Section -->
+        <div class="mt-4 pt-3 border-t border-slate-100 text-center">
+          <div class="barcode-visual">
+            <span class="barcode-bar w-1"></span>
+            <span class="barcode-bar w-0.5"></span>
+            <span class="barcode-bar w-2"></span>
+            <span class="barcode-bar w-1"></span>
+            <span class="barcode-bar w-3"></span>
+            <span class="barcode-bar w-1"></span>
+            <span class="barcode-bar w-2"></span>
+            <span class="barcode-bar w-0.5"></span>
+            <span class="barcode-bar w-2"></span>
+            <span class="barcode-bar w-3"></span>
+            <span class="barcode-bar w-1"></span>
+            <span class="barcode-bar w-0.5"></span>
+            <span class="barcode-bar w-2"></span>
+            <span class="barcode-bar w-1"></span>
+            <span class="barcode-bar w-3"></span>
+            <span class="barcode-bar w-2"></span>
+          </div>
+          <span id="receipt-barcode-number" class="text-[11px] font-mono-code font-bold text-slate-700 tracking-wider">TRX-WASH-1002</span>
+        </div>
+
+        <!-- Scannable QR Code -->
+        <div class="mt-3 text-center">
+          <div class="inline-block p-2 bg-white rounded-xl border border-slate-200 shadow-xs">
+            <img id="receipt-qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=WASH-1002" alt="Scannable QR Code" class="w-28 h-28 mx-auto">
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1">Scan QR Code untuk verifikasi status cucian</p>
+        </div>
+
+        <!-- Tear separator line -->
+        <div class="receipt-tear-line"></div>
+
+        <!-- Order Information List -->
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-slate-400">Kode Nota</span>
+            <span id="receipt-order-code" class="font-mono-code font-bold text-blue-700">WASH-1002</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Pelanggan</span>
+            <span id="receipt-customer-name" class="font-bold text-slate-800">Budi Santoso</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">No. WhatsApp</span>
+            <span id="receipt-customer-phone" class="font-medium text-slate-700">081398765432</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Tgl Masuk</span>
+            <span id="receipt-date-created" class="text-slate-700">05 Nov 2026, 10:30</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Pengambilan</span>
+            <span id="receipt-pickup-delivery" class="text-slate-700">Kurir Antar-Jemput</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Status Cucian</span>
+            <span id="receipt-status-badge" class="badge-status badge-selesai text-[10px]">
+              Selesai
+            </span>
+          </div>
+        </div>
+
+        <!-- Itemized Breakdown -->
+        <div class="mt-4 pt-3 border-t border-slate-200 space-y-1.5 text-xs">
+          <div class="flex justify-between font-semibold text-slate-700">
+            <span id="receipt-service-title">Express 3 Jam (3.0 Kg)</span>
+            <span id="receipt-service-subtotal">Rp 45.000</span>
+          </div>
+          <div class="flex justify-between text-slate-400 text-[11px]">
+            <span>Tarif Dasar</span>
+            <span id="receipt-service-rate">Rp 15.000 / Kg</span>
+          </div>
+          <div class="flex justify-between text-slate-400 text-[11px]">
+            <span>Pajak & Biaya Admin</span>
+            <span>Rp 0</span>
+          </div>
+        </div>
+
+        <!-- Total Box -->
+        <div class="mt-4 pt-3 border-t-2 border-slate-900 flex justify-between items-center">
+          <span class="text-xs font-bold uppercase text-slate-900">Total Pembayaran</span>
+          <span id="receipt-total-price" class="text-lg font-extrabold text-blue-700">Rp 45.000</span>
+        </div>
+
+        <div class="mt-3 bg-emerald-50 text-emerald-800 rounded-lg p-2 text-center text-[11px] font-bold">
+          <i class="fa-solid fa-circle-check mr-1 text-emerald-600"></i> LUNAS / VERIFIED VIA QR CODE
+        </div>
+
+        <!-- Note from Provider -->
+        <div class="mt-3 text-[10px] text-slate-400 text-center leading-relaxed">
+          Simpan nota ini atau scan QR Code di atas untuk mengambil pakaian. Terima kasih telah mempercayakan pakaian Anda kepada Rels Laundry!
+        </div>
+
+        <!-- Receipt Action Buttons (Hidden when printing) -->
+        <div class="mt-5 space-y-2 no-print">
+          <button onclick="window.print()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center space-x-2 shadow-sm cursor-pointer">
+            <i class="fa-solid fa-print"></i>
+            <span>Cetak / Unduh E-Receipt</span>
+          </button>
+
+          <button id="btn-receipt-wa-share" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-xl text-xs transition flex items-center justify-center space-x-2 shadow-sm cursor-pointer">
+            <i class="fa-brands fa-whatsapp"></i>
+            <span>Kirim Nota ke WhatsApp Pelanggan</span>
+          </button>
+
+          <!-- Explicit Close Button -->
+          <button type="button" onclick="closeReceiptModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center space-x-1.5 border border-slate-200 cursor-pointer">
+            <i class="fa-solid fa-xmark"></i>
+            <span>Tutup Nota</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= MODAL: EDIT / DETAIL ORDER ================= -->
+  <div id="order-modal" onclick="if(event.target === this) closeOrderModal()" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 id="modal-title" class="text-base font-bold text-slate-900">Edit Data Order Laundry</h3>
+        <button id="btn-close-modal" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="order-form" class="mt-4 space-y-3">
+        <input type="hidden" id="form-order-id">
+
+        <div id="modal-form-error" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs"></div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Pelanggan</label>
+          <input type="text" id="form-name" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Nomor WhatsApp</label>
+          <input type="text" id="form-phone" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Paket Layanan</label>
+            <select id="form-service" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500">
+              <option value="Cuci Komplit (Cuci + Setrika)">Cuci Komplit</option>
+              <option value="Cuci Kering (Lipat)">Cuci Kering</option>
+              <option value="Setrika Saja">Setrika Saja</option>
+              <option value="Express 3 Jam">Express 3 Jam</option>
+              <option value="Bedcover / Selimut">Bedcover / Selimut</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Berat (Kg)</label>
+            <input type="number" step="0.1" min="0.1" id="form-weight" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div id="form-status-group" class="hidden">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Status Pengerjaan (Admin)</label>
+            <select id="form-status" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500">
+              <option value="Antrian">Antrian</option>
+              <option value="Proses Cuci">Proses Cuci</option>
+              <option value="Setrika">Setrika</option>
+              <option value="Selesai">Selesai</option>
+              <option value="Diambil / Diantar">Diambil / Diantar</option>
+            </select>
+          </div>
+
+          <div id="form-pickup-group" class="col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Metode Pengambilan</label>
+            <select id="form-pickup" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500">
+              <option value="Ambil Sendiri">Ambil Sendiri</option>
+              <option value="Kurir Antar-Jemput">Kurir Antar-Jemput</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan Tambahan</label>
+          <input type="text" id="form-notes" placeholder="Contoh: Pisahkan pakaian putih, parfum lavender" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500">
+        </div>
+
+        <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+          <button type="button" id="btn-cancel-modal" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+            Batal
+          </button>
+          <button type="submit" id="form-submit-btn" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm flex items-center space-x-1.5">
+            <i class="fa-solid fa-check"></i>
+            <span id="form-submit-text">Simpan Perubahan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: DELETE CONFIRMATION ================= -->
+  <div id="delete-modal" onclick="if(event.target === this) closeDeleteModal()" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 text-center">
+      <div class="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-xl mx-auto mb-3">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="text-base font-bold text-slate-900">Hapus Nota Order?</h3>
+      <p class="text-xs text-slate-500 mt-1">
+        Apakah Anda yakin ingin menghapus order <span id="delete-order-code" class="font-mono-code font-bold text-rose-600"></span>? Tindakan ini akan menghapus data dari persistent SQLite database.
+      </p>
+
+      <div class="flex items-center justify-center space-x-3 mt-5">
+        <button id="btn-cancel-delete" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+          Batal
+        </button>
+        <button id="btn-confirm-delete" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-sm">
+          Ya, Hapus Data
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <!-- Frontend Client Logic -->
+  <script src="/app.js"></script>
+</body>
+</html>
