@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+.env.local
+.vercel
+data/*.db
+data/test_laundry.db
+tests
+*.md
+.DS_Store
+Thumbs.db
