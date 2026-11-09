@@ -35,7 +35,12 @@ app.use('/api/whatsapp', whatsappRouter);
 app.use('/api/logs', logsRouter);
 
 // Serve Frontend Static Files
-app.use(express.static(path.join(__dirname, 'public')));
+const fs = require('fs');
+const publicDir = fs.existsSync(path.join(__dirname, '..', 'public'))
+  ? path.join(__dirname, '..', 'public')
+  : path.join(__dirname, 'public');
+
+app.use(express.static(publicDir));
 
 // 404 Handler for API routes
 app.use('/api/*', (req, res) => {
@@ -48,7 +53,7 @@ app.use('/api/*', (req, res) => {
 
 // SPA fallback to index.html
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(publicDir, 'index.html'));
 });
 
 // Centralized Error Handling Middleware
